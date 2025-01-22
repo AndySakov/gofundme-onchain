@@ -6,21 +6,23 @@ import {PriceConverterV1} from "./PriceConverterV1.sol";
 contract FundMe {
     using PriceConverterV1 for uint256;
 
-    address owner;
+    uint256 public constant MINIMUM_USD = 5e18;
+
+    address immutable i_owner;
     bool public openForDonations;
     bool public collectionDelegated;
-    address payable collectionDelegate;
-    uint256 public minimumUsd = 5e18;
-    address[] funders;
+    address payable public collectionDelegate;
+    
+    address[] public funders;
     mapping(address => uint256) public userDeposits;
 
     constructor() {
-        owner = msg.sender;
+        i_owner = msg.sender;
         openForDonations = true;
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner, "Only owner can perform this action");
+        require(msg.sender == i_owner, "Only owner can perform this action");
         _;
     }
 
@@ -33,7 +35,7 @@ contract FundMe {
 
     function fund() public payable {
         require(openForDonations, "Funding is closed");
-        require(msg.value.convertToUsd() > minimumUsd, "Didn't send enough eth");
+        require(msg.value.convertToUsd() > MINIMUM_USD, "Didn't send enough eth");
         funders.push(msg.sender);
         userDeposits[msg.sender] += msg.value;
     }
@@ -51,7 +53,7 @@ contract FundMe {
         if(collectionDelegated) {
             collectionDelegate.transfer(address(this).balance);
         } else {
-            payable (owner).transfer(address(this).balance);
+            payable (i_owner).transfer(address(this).balance);
         }
     }
 
