@@ -71,4 +71,12 @@ contract FundMe {
     function balanceUsd() public view returns (uint256) {
         return balance().convertToUsd();
     }
+
+    receive() external payable { 
+        fund();
+    }
+
+    fallback() external payable { 
+        fund();
+    }
 }
