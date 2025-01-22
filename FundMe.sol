@@ -19,10 +19,13 @@ contract FundMe {
         openForDonations = true;
     }
 
-    function setDelegate(address delegate) public {
-        require(msg.sender == owner, "Only owner can set delegate");
-        require(!collectionDelegated, "Collection delegate has already been set");
+    modifier onlyOwner {
+        require(msg.sender == owner, "Only owner can perform this action");
+        _;
+    }
 
+    function setDelegate(address delegate) public onlyOwner {
+        require(!collectionDelegated, "Collection delegate has already been set");
         collectionDelegate = payable (delegate);
     }
 
@@ -33,9 +36,7 @@ contract FundMe {
         userDeposits[msg.sender] += msg.value;
     }
 
-    function withdraw() public payable {
-        require(msg.sender == owner, "Only owner can withdraw");
-
+    function withdraw() public payable onlyOwner {
         openForDonations = false;
         for (uint256 index; index < funders.length; index++) 
         {
