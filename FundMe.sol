@@ -8,6 +8,8 @@ contract FundMe {
 
     address owner;
     bool public openForDonations;
+    bool public collectionDelegated;
+    address payable collectionDelegate;
     uint256 public minimumUsd = 5e18;
     address[] funders;
     mapping(address => uint256) public userDeposits;
@@ -15,6 +17,13 @@ contract FundMe {
     constructor() {
         owner = msg.sender;
         openForDonations = true;
+    }
+
+    function setDelegate(address delegate) public {
+        require(msg.sender == owner, "Only owner can set delegate");
+        require(!collectionDelegated, "Collection delegate has already been set");
+
+        collectionDelegate = payable (delegate);
     }
 
     function fund() public payable {
@@ -34,10 +43,19 @@ contract FundMe {
             delete userDeposits[funder];
         }
         funders = new address[](0);
-        payable (owner).transfer(address(this).balance);
+
+        if(collectionDelegated) {
+            collectionDelegate.transfer(address(this).balance);
+        } else {
+            payable (owner).transfer(address(this).balance);
+        }
     }
 
     function balance() public view returns (uint256) {
         return address(this).balance;
+    }
+
+    function balanceUsd() public returns (uint256) {
+        return balance().convertToUsd();
     }
 }
