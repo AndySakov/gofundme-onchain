@@ -24,8 +24,10 @@ contract FundMe {
         _;
     }
 
+    // restricted the delegate to be set once just for concept purposes. probably a bad idea incase the owner makes a mistake the first time lol.
     function setDelegate(address delegate) public onlyOwner {
         require(!collectionDelegated, "Collection delegate has already been set");
+        collectionDelegated = true;
         collectionDelegate = payable (delegate);
     }
 
@@ -36,7 +38,8 @@ contract FundMe {
         userDeposits[msg.sender] += msg.value;
     }
 
-    function withdraw() public payable onlyOwner {
+    // would probably be smarter to have the delegate be passed as a param here but i chose to go with the setter strategy for concept purpose.
+    function withdraw() public payable onlyOwner { 
         openForDonations = false;
         for (uint256 index; index < funders.length; index++) 
         {
@@ -56,7 +59,7 @@ contract FundMe {
         return address(this).balance;
     }
 
-    function balanceUsd() public returns (uint256) {
+    function balanceUsd() public view returns (uint256) {
         return balance().convertToUsd();
     }
 }
