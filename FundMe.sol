@@ -3,6 +3,11 @@ pragma solidity ^0.8.28;
 
 import {PriceConverterV1} from "./PriceConverterV1.sol";
 
+error NotOwner();
+error DelegateAlreadySet(address existingDelegate);
+error FundingClosed();
+error NotEnoughEth(uint256 minimumUsd);
+
 contract FundMe {
     using PriceConverterV1 for uint256;
 
@@ -22,20 +27,22 @@ contract FundMe {
     }
 
     modifier onlyOwner {
-        require(msg.sender == i_owner, "Only owner can perform this action");
+        require(msg.sender == i_owner, NotOwner());
         _;
     }
 
     // restricted the delegate to be set once just for concept purposes. probably a bad idea incase the owner makes a mistake the first time lol.
     function setDelegate(address delegate) public onlyOwner {
-        require(!collectionDelegated, "Collection delegate has already been set");
+        require(!collectionDelegated, DelegateAlreadySet({
+            existingDelegate: collectionDelegate
+        }));
         collectionDelegated = true;
         collectionDelegate = payable (delegate);
     }
 
     function fund() public payable {
-        require(openForDonations, "Funding is closed");
-        require(msg.value.convertToUsd() > MINIMUM_USD, "Didn't send enough eth");
+        require(openForDonations, FundingClosed());
+        require(msg.value.convertToUsd() > MINIMUM_USD, NotEnoughEth({minimumUsd: MINIMUM_USD}));
         funders.push(msg.sender);
         userDeposits[msg.sender] += msg.value;
     }
